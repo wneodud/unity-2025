@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARROW RUSH</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main id="app">
+    <canvas id="game" aria-label="상하좌우 화살표 반응 게임"></canvas>
+
+    <header class="hud" aria-live="polite">
+      <section class="hud-left">
+        <div class="stat"><span>SCORE</span><strong id="score">0</strong></div>
+        <div class="stat"><span>RATING</span><strong id="rating">-</strong></div>
+      </section>
+      <section class="hud-center">
+        <div class="combo-box"><span>COMBO</span><strong id="combo">0</strong></div>
+        <div id="shield-chip" class="chip shield">SHIELD 10+</div>
+        <div id="fever-chip" class="chip fever">FEVER 30+</div>
+      </section>
+      <section class="hud-right">
+        <div id="play-mode-chip" class="mode-chip">BASIC</div>
+        <div class="life-box"><span>LIFE</span><strong id="life">♥ ♥ ♥ ♥ ♥</strong></div>
+        <button id="settings-open" class="icon-button" type="button" aria-label="설정" title="설정">⚙</button>
+      </section>
+    </header>
+
+    <aside class="side-gauge side-gauge-left" aria-label="GOGOGO 게이지">
+      <strong>GOGOGO</strong>
+      <div class="gauge-track"><div id="gogo-fill" class="gauge-fill gogo-fill"></div></div>
+      <span id="gogo-count">0 / 50</span>
+    </aside>
+    <aside class="side-gauge side-gauge-right" aria-label="스페셜 게이지">
+      <strong>SPECIAL</strong>
+      <div class="gauge-track"><div id="special-fill" class="gauge-fill special-fill"></div></div>
+      <span id="special-count">0 / 10</span>
+    </aside>
+
+    <section id="slow-rack" class="slow-rack" aria-label="CTRL 블록 파괴 아이템">
+      <div class="slow-title">CTRL</div>
+      <div class="slow-slots" aria-hidden="true">
+        <span class="slow-slot"></span><span class="slow-slot"></span><span class="slow-slot"></span><span class="slow-slot"></span>
+      </div>
+      <div id="slow-status" class="slow-status">CTRL 파괴</div>
+    </section>
+
+    <div id="mode-watermark" class="mode-watermark" aria-hidden="true"></div>
+    <div id="mode-banner" class="mode-banner" aria-live="assertive"></div>
+    <div id="ctrl-gain-banner" class="ctrl-gain-banner" aria-live="assertive"><strong>CTRL +1</strong><span>블록 파괴 1회</span></div>
+    <div id="judgement" class="judgement" aria-live="assertive"></div>
+    <div id="milestone" class="milestone"></div>
+
+    <section id="start-screen" class="overlay visible">
+      <div class="panel start-panel onboarding-panel">
+        <p class="eyebrow">ONE-LANE KEYBOARD REACTION</p>
+        <h1>ARROW <span>RUSH</span></h1>
+        <p class="lead">설명을 보고 모드를 고른 뒤 <b>게임 시작</b>을 누르면 시작합니다.</p>
+
+        <div class="howto-grid">
+          <article class="howto-card">
+            <h3>1. 기본 조작</h3>
+            <p>블록이 빛나는 판정선에 닿을 때 같은 키를 누르세요. 블록은 모두 <b>한 줄</b>로 내려옵니다.</p>
+            <div class="direction-legend">
+              <span class="dir-left">← 왼쪽</span><span class="dir-up">↑ 위</span><span class="dir-down">↓ 아래</span><span class="dir-right">→ 오른쪽</span>
+            </div>
+          </article>
+          <article class="howto-card">
+            <h3>2. 특수블록 / HELL</h3>
+            <p>기본·∞ 모드 특수블록은 <b>화살표 최대 2개</b>까지만 합쳐집니다.</p>
+            <div class="special-example"><span class="dir-left">←</span><span class="dir-right">→</span></div>
+            <p>HELL 모드에서는 3입력 특수블록이 추가되고 가운데 <span class="space-example">■</span>는 <b>SPACE</b>입니다.</p>
+            <div class="special-example"><span class="dir-left">←</span><span class="space-example">■</span><span class="dir-right">→</span><small>HELL 전용</small></div>
+          </article>
+          <article class="howto-card">
+            <h3>3. 스핀스핀~</h3>
+            <p><b>PERFECT 50개</b> → GOGOGO 10초. 특수블록만 떨어집니다.</p>
+            <p><b>특수블록 성공 10개</b> → SPECIAL TIME. 두 번 입력, 점수 <b>×5</b>, 블록 10개가 나오면 종료합니다.</p>
+            <p>둘이 겹치면 <b>스핀스핀~</b>이 발동합니다. 10초 동안 실제 중앙 레인 전체가 시계방향으로 한 바퀴 돌며 <b>단일 화살표만</b> 나옵니다. 스핀 중에도 MISS·라이프·쉴드는 평소 규칙 그대로지만 <b>판정 성공 범위는 평소의 1.5배</b>로 넓어집니다. 스핀이 끝나면 GOGOGO·SPECIAL 게이지와 진행상태는 모두 <b>0으로 초기화</b>됩니다.</p>
+          </article>
+          <article class="howto-card">
+            <h3>4. CTRL 블록 파괴</h3>
+            <p><b>블록 10개 성공할 때마다 CTRL 1개</b>, 최대 4개 저장. <kbd>Ctrl</kbd>을 누르면 1개를 써서 <b>판정선에 가장 가까운 블록 1개를 즉시 파괴</b>합니다. 점수·콤보를 올리는 판정은 아닙니다.</p>
+            <div class="mini-slow"><i></i><i></i><i></i><i></i></div>
+          </article>
+        </div>
+
+        <div class="mode-select-wrap">
+          <h3>모드 선택</h3>
+          <div class="mode-select">
+            <label class="mode-option">
+              <input type="radio" name="play-mode" value="normal" checked />
+              <span><b>기본 모드</b><small>라이프 5개 · 특수블록 최대 화살표 2개</small></span>
+            </label>
+            <label class="mode-option infinite-option">
+              <input type="radio" name="play-mode" value="infinite" />
+              <span><b>∞ 라이프 모드</b><small>라이프 무한 · 특수블록 최대 화살표 2개</small></span>
+            </label>
+            <label class="mode-option hell-option">
+              <input type="radio" name="play-mode" value="hell" />
+              <span><b>HELL 모드</b><small>라이프 5개 · 3입력 특수블록 + SPACE 사각형 등장</small></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="records compact-records">
+          <div><span>HIGH SCORE</span><strong id="record-score">0</strong></div>
+          <div><span>MAX COMBO</span><strong id="record-combo">0</strong></div>
+          <div><span>BEST RATING</span><strong id="record-rating">-</strong></div>
+        </div>
+        <button id="start-button" class="primary start-game-button" type="button">게임 시작</button>
+        <small class="start-note">플레이 중 Esc 일시정지 · Ctrl 가장 가까운 블록 파괴 · SPACE는 HELL 모드 사각형 블록 입력</small>
+      </div>
+    </section>
+
+    <section id="countdown-screen" class="overlay" aria-live="assertive"><div id="countdown-text" class="countdown-text">3</div></section>
+
+    <section id="pause-screen" class="overlay">
+      <div class="panel compact-panel"><p class="eyebrow">PAUSED</p><h2>일시정지</h2><p>Esc를 누르면 바로 이어서 플레이합니다.</p><button id="resume-button" class="primary" type="button">계속하기</button></div>
+    </section>
+
+    <section id="gameover-screen" class="overlay">
+      <div class="panel result-panel">
+        <p class="eyebrow danger">RUN ENDED</p><h2>GAME OVER</h2>
+        <div class="result-grid">
+          <div><span>SCORE</span><strong id="final-score">0</strong></div><div><span>RATING</span><strong id="final-rating">-</strong></div>
+          <div><span>MAX COMBO</span><strong id="final-combo">0</strong></div><div><span>PLAY TIME</span><strong id="final-time">0:00</strong></div>
+          <div><span>PERFECT</span><strong id="final-perfect">0</strong></div><div><span>GOOD</span><strong id="final-good">0</strong></div><div><span>MISS</span><strong id="final-miss">0</strong></div>
+        </div>
+        <button id="retry-button" class="primary" type="button">모드 선택으로</button>
+      </div>
+    </section>
+
+    <section id="settings" class="settings-backdrop" hidden>
+      <div class="panel settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="settings-header"><div><p class="eyebrow">OPTIONS</p><h2 id="settings-title">설정</h2></div><button id="settings-close" class="icon-button close" type="button" aria-label="닫기">×</button></div>
+        <label class="setting-row slider-row"><span>BGM</span><input id="bgm-volume" type="range" min="0" max="100" value="55" /><output id="bgm-value">55%</output></label>
+        <label class="setting-row slider-row"><span>효과음</span><input id="sfx-volume" type="range" min="0" max="100" value="80" /><output id="sfx-value">80%</output></label>
+        <p class="settings-help">방향별 형광색은 고정입니다. 설정을 여는 동안 게임은 자동으로 멈춥니다.</p>
+        <div class="settings-actions"><button id="records-reset" class="secondary" type="button">기록 초기화</button><button id="settings-done" class="primary" type="button">완료</button></div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="./src/rushRecovery.js"></script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
